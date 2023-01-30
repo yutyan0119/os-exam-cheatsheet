@@ -755,15 +755,37 @@ pthread_mutex_unlock(&m);
         return 0;
     }
     ```
+    GCCの関数を使うと以下になる
+    ```c
+      return __sync_bool_compare_and_swap(p, 0, 1);
+    ```
     - fetch&add p, x
     ```c
     *p = *p + x;
+    ```
+    ```c
+    while(1){
+        r = *p;
+        s = r + x;
+        if (__sync_bool_compare_and_swap(p, r, s)) {
+            return r;
+        }
+    }
     ```
     - swap p, r
     ```c
     x = *p;
     *p = r;
     r = x;
+    ```
+    ```c
+    while(1){
+        x = *p;
+        y = f(x);
+        if (__sync_bool_compare_and_swap(p, x, y)) {
+            return r;
+        }
+    }
     ```
 - 汎用命令
     - compare&swap: 自分が読んだ値が書きかわっていないことを確かめながら不可分に書き込む
@@ -826,7 +848,14 @@ int unlock(mutex_t * m) {
 futex(&u, FUTEX_WAIT, v, 0, 0, 0);
 ```
 参照: [man futex](https://linuxjm.osdn.jp/html/LDP_man-pages/man2/futex.2.html)
-
+```c
+#include <sys/syscall.h>
+#include <linux/futex.h>
+#include <sys/time.h>
+int futex(int * uaddr, int futex_op, int val, const struct timespec *timeout, int *uaddr2, int val3) {
+  return syscall(SYS_futex, uaddr, futex_op, val, timeout, uaddr2, val3);
+}
+```
 ### 休眠待機　vs 繁忙待機
 - 休眠待機 (blocking wait)
     - `futex`, `cond_wait`などで待つ
@@ -883,7 +912,7 @@ MMUによって
 1. プロセス間でメモリの分離
 2. カーネル(OS)の保護
 3. 物理メモリ量を超えたメモリ割り当て
-4. *要求時ページング*
+4. *要求時ページング* = マイナーフォルト
    - 物理メモリを確保せずに論理アドレスを割り当てる（高速）
 
 が行える。
@@ -938,7 +967,7 @@ $$ 2^{48}\times 8 \times Process = 2PB \times Process $$
 メモリを割り当てることによって、**論理アドレスの範囲がアクセス可能になる**。実際にはアドレス空間表に割り当て済みであることを記述するだけで、**アクセス発生時にメモリが割り当てられる**。
 
 ## ページアウト/ページイン
-物理メモリが足りなくなったときに、ページアウトを行う。ページアウトは、ページテーブルの物理ページを不在とし、次にアクセスする際にページフォルトが起こるようにしておく。ページアウトされたページは、ページインされるまで、物理メモリには存在しない。スライド05の図を見る。
+物理メモリが足りなくなったときに、ページアウトを行う。ページアウトは、ページテーブルの物理ページを不在とし、次にアクセスする際にページフォルトが起こるようにしておく。ページアウトされたページは、ページインされるまで、物理メモリには存在しない。スライド05の図を見る。（メジャーフォルト）
 
 ## 資源使用量やメモリの割当状況を知るためのAPI
 - `getrusage`
