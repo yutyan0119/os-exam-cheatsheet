@@ -1,4 +1,4 @@
-## イントロ
+# 00 イントロ
 - オペレーティングシステム: Windows, MacOS, Linux, BSD, iOS, Androidなど
   - アプリケーションを動かすためのソフトウェア (基本ソフトウェア)
   - 存在理由:
@@ -23,15 +23,13 @@ OSがないと. . .
 - 外部ストレージを安全に分け合うことが困難
 - 入出力が複雑
 
-OSの機能
+## OSの機能
 - CPU を分け合う: **プロセス, スレッド**
 - メモリを分け合う: **プロセス (アドレス空間), 仮想記憶**
 - ストレージを分け合う: **ファイルシステム, システムコール**
 - 入出力: **ファイルシステム, プロセス間通信**
 
-
-CPUの特権モード・ユーザモード
-
+### CPUの特権モード・ユーザモード
 - CPU の動作モードに (少なくとも)2 種類ある
 - ユーザモード
 - 特権モード (スーパバイザモード)
@@ -46,7 +44,7 @@ OSのデータやプログラムがOS以外のプログラムには読み書き�
 
 下手に設計すれば, 結局誰でも特権モードで好きな命令を実行可能になる危険 → トラップ命令
 
-トラップ命令
+### トラップ命令
 - 以下の2つを行う
   1. ユーザモードから特権モードへ移行
   2. ある定められた番地へジャンプ
@@ -56,7 +54,7 @@ OSのデータやプログラムがOS以外のプログラムには読み書き�
 - ある定められた番地は「**割り込みベクタ**」と呼ばれるメモリ上の配列に登録されており、OSが起動時に設定する
 - ユーザプログラムからOSへの「入り口」 = **システムコール**
 
-システムコール
+### システムコール
 - OS がユーザに対して提供している (根源的な) 機能
   - open, write, read, close, fork, exec, wait, exit, socket, send, recv, etc
   - 本当にシステムコールが呼び出されている瞬間は, トラップ命令で OS 内の命令に突入する瞬間
@@ -67,7 +65,7 @@ OSのデータやプログラムがOS以外のプログラムには読み書き�
 - OS内部のプログラム(特権モードで実行される)をしっかり書けば、OSを保護することが可能
 
 
-## プロセス
+# 01 プロセス
 
 - プログラム: 実行すべき命令が書かれているもの。Firefox, シェル (bash), ls, a.out などが含まれる。実体はファイルとして存在する。
 - プロセス: プログラムが実行されているもの。メニューからアプリを起動したり、コマンドプロンプトからコマンドを実行するたびに作られる。
@@ -100,29 +98,29 @@ $ pgrep -f tau
 
 - manコマンド（略）
 
-#### Unix: プロセス関連のシステムコール
-- fork: プロセスを作る (コピーする)
-- execve: 現在のプロセスで指定のプログラムを実行する
+## Unix: プロセス関連のシステムコール
+- `fork`: プロセスを作る (コピーする)
+- `execve`: 現在のプロセスで指定のプログラムを実行する
   - 変種: exec{v,l}p?e? (引数の渡し方, 微妙な意味の違い)
   - 総称して exec と呼ぶ (exec という名前の関数はない)
-- exit: 現在のプロセスを終了する
-- waitpid: 子プロセスの終了待ち + 処理
+- `exit`: 現在のプロセスを終了する
+- `waitpid`: 子プロセスの終了待ち + 処理
   - 変種: wait, wait3, wait4
 
-
+### 処理の流れ
 - 子プロセスの生成
-  1. fork 実行によりプロセスが複製される
-  2. 親プロセスと子プロセスの両方が fork の続きを実行する
+  1. `fork` 実行によりプロセスが複製される
+  2. 親プロセスと子プロセスの両方が `fork` の続きを実行する
 
 - 子プロセスの終了
-  1. 子プロセスが終了する (exit を呼ぶ, main 関数が return するなど)
+  1. 子プロセスが終了する (`exit` を呼ぶ, main 関数が return するなど)
 
 - 処理
-  1. 親プロセスが処理をするまで (wait, waitpid などを呼ぶ)
+  1. 親プロセスが処理をするまで (`wait`, `waitpid` などを呼ぶ)
   2. 子プロセスは「ゾンビ (プロセス番号だけが存在する) 状態」
   3. 親プロセスが処理を終えるとすべてがなくなる
 
-#### fork
+### `fork`
 - 呼び出したプロセスを複製
 - fork() の続きが 2 プロセス (親と子) で実行される
 - 親と子で返り値だけが違う
@@ -144,14 +142,14 @@ if (pid == -1) {
 }
 ```
 
-#### exit
+### `exit`
 - exit を呼んだプロセスを, 指定した終了ステータス(exit status:0~255 の整数) で終了させる
 - 当然ながら exit 呼び出し以降は実行されない
 - main 関数が終了した場合も同じ効果 (従って main 関数の最後にわざわざ呼ばないのが普通)
   - main の返り値 (return value) が exit status
 - exit status は親プロセスが取得可能
 
-#### waitpid
+### `waitpid`
 - 基本は子プロセスの終了待ちと処理(ゾンビ状態を解消、プロセス番号の回収)
 - 子プロセスの終了待ち方法についての指定が可能 (特定のプロセス、全て、など)
 - 終了を待つか待たないかも指定可能
@@ -172,7 +170,7 @@ if (cid == -1) {
 }
 ```
 
-- ゾンビ (defunct)
+## ゾンビ (defunct)
   - プロセス C がゾンビ (defunct) の意味は、C が終了しているが、その親が (waitpid などで)C の終了を確認していない状態
   - 本質的には、C のプロセス番号を再利用できない状態
   - waitpid が「C が終了した」と親に知らせるまでは、C のプロセス番号を他のプロセスに再利用すると、プロセス番号からプロセスを一意に特定できなくなるため
@@ -224,7 +222,7 @@ int main() {
 }
 ```
 
-#### exec - 子プロセスの生成
+## exec - 子プロセスの生成
 1. fork ～ プロセスが複製される. 親と子が両方,fork の続きを実行
 2. 子プロセスが exec を実行
 
@@ -232,7 +230,7 @@ int main() {
 - 注意事項:
   - exec の呼び出した後の部分(上記のもの以降)は実行されない
   - 呼び出したプロセスは現在の情報をすべて忘れて、指定されたプログラムを実行するだけの新しいプロセスとして生まれ変わる
-  - exec は子プロセスを作らない
+  - **exec は子プロセスを作らない**
 
 execの変種くんたち：exec{v,l}p?e?
 - execv, execve, execvp, execvpe, execl, execle, execlp
@@ -286,7 +284,7 @@ int main() {
 
 
 
-## スレッド
+# 02 スレッド
 - スレッドはCPUを分け合うための抽象化
 - スレッドがなければCPUは割り当てられず計算ができない
 - CPUコアをN個使用したい場合はN個以上のスレッドが必要
@@ -399,7 +397,7 @@ int main(int argc, char** argv) {
 ```
 
 
-## スケジューリング
+# 03 スケジューリング
 - OS の重要な仕事 : スレッドに CPU(仮想コア) を割り当てる
   - 基本 : かわりばんこ (round robin)
 - 文字通り存在するすべてのスレッド (> 1,000個は当たり前) に均等時間ずつではない
@@ -418,7 +416,7 @@ int main(int argc, char** argv) {
 4. pthread mutex lock, pthread cond wait など同期 API で同期が成立していない
 5. sleep, usleep, nanosleep など休眠 API
 6. ページフォルトで I/O が発生
-- OS は, 現在実行中のスレッドから, 別のスレッドに切り替える (コンテクストスイッチ)
+- OS は, 現在実行中のスレッドから, 別のスレッドに切り替える (**コンテクストスイッチ**)
 
 ほとんどのスレッドは中断している
 - ps auxww, top コマンドの STAT 欄
@@ -430,11 +428,11 @@ int main(int argc, char** argv) {
   見かけない
 - Unix の load average (負荷平均) = R か D 状態にあるスレッド数 ≈ R 状態にあるスレッド数 (の最近何分かの平均)
 
-タスクキュー、ランキュー（FIFOとは限らない）
+## タスクキュー、ランキュー（FIFOとは限らない）
 - 実行中・実行可状態のスレッドを維持する
 - OS はスレッドを切り替える際, ランキュー中から, **ある基準**に従って次のスレッドを選んで実行する
 
-#### ランキューの動き
+### ランキューの動き
 - ランキューには実行可・実行中のスレッドが入っている
 - 実行中のスレッドが中断 → ランキューから外れる
 - ランキューから次のスレッドが選ばれて実行される
@@ -442,13 +440,13 @@ int main(int argc, char** argv) {
   - タイマ割り込み → 実行中のスレッドが十分な時間を消費していたら, **preemption**
 - ランキューから次のスレッドが選ばれて実行される
 
-#### Preemption (横取り)
+### Preemption (横取り)
 - スレッドが自発的に OS に制御を渡さない (なにもシステムコールを呼ばずに走り続けている) 状態でも, 強制的に制御を奪うこと (≡ preemption)
 - preemption を行うスケジューラ ≡ preemptive なスケジューラ
 - 今日の OS のスケジューラは事実上すべてが preemptive
 - preemption を実現する仕組み: **タイマ割り込み**
 
-#### タイマ割り込み
+### タイマ割り込み
 仮想コアは以下を繰り返す
 ```C
 while (1) {
@@ -461,10 +459,10 @@ while (1) {
 PCはプログラムカウンタレジスタのこと
 ```
 
-スレッド選択
+## スレッド選択
 - OS はスレッドを切り替える際, ランキュー中から, **ある基準**に従って次のスレッドを選んで実行する
 - **ある基準**の例
-  - Round Robin (純粋なかわりばんこ)
+  - **Round Robin** (純粋なかわりばんこ)
     - ランキューが純粋な FIFO
     - 中断から回復したらキューの末尾に入る
     - 実行中のスレッドの time quantum が expire したら末尾に入る
@@ -472,7 +470,7 @@ PCはプログラムカウンタレジスタのこと
     - 問題
       - 公平性: 「中断していた ⇐⇒ CPU を使っていなかった」スレッドも「preempty された ⇐⇒ ずっと CPUを使っていた」スレッドも同じ扱い
       - 対話的なプログラムの応答性: 実行可のスレッドが多い(load average が高い) と, それに比例して, 「応答時間 = 中断状態から再開してから実行されるまでの時間」が長くなる
-  - Linux Completely Fair Scheduler (CFS)
+  - **Linux Completely Fair Scheduler (CFS)**
     - Linux 2.6.23 以降のデフォルトスケジューラ
     - 各スレッドが「**消費した合計 CPU 時間 (→ vruntime)**」を管理
     - スレッド切り替え (実行中スレッドが中断した, 中断中スレッドが復帰した, タイマ割り込みがおきた, など) 時に, 実行可能スレッド中で vruntime が最小のスレッドを次に実行する
@@ -480,7 +478,7 @@ PCはプログラムカウンタレジスタのこと
     - 長い目で見て, 各スレッドへの CPU 割当時間を均等にすることができる → 公平
     - しばらく中断していた (CPU を使っていなかった) スレッドが再開した時, その間実行されていたスレッドよりも vruntime が小さいことが期待される→ 対話的スレッドの応答性が高い
 
-#### vruntime
+### vruntime
 1. 生成時は親の vruntime を継承. 親スレッド A が子スレッド B を生成
 
 $$
@@ -501,27 +499,394 @@ t.vruntime−20 ms)
 $$
 
 
-# section 4 (null)
+# 並行処理と同期
 
-# 論理アドレス空間
+## 共有メモリと競合状態
+### 例
+同一プロセス内のスレッドはメモリを共有している。
+
+競合する例: 2 child threads
+
+片方のg += 100 の間にもう一方のスレッドによりgが書き換えられていなければ成功する。
+なぜ？: CPUが一度に行えるメモリに対する操作はread, writeどちらかだけである。
+```c
+int g = 0; // global
+
+void *f(void *arg) {
+    g += 100;
+    return 0;
+}
+
+int main() {
+    int err;
+    g = 200;
+    /* スレッドを作る */
+    pthread_t child_thread_id[2];
+    for (int i = 0; i < 2; i++)
+        pthread_create(&child_thread_id[i], 0, f, 0);
+    /* 終了待ち */
+    for (int i = 0; i < 2; i++) {
+        void * ret = 0;
+        pthread_join(child_thread_id[i], &ret);
+    }
+    printf("g = %d\n", g);
+    return 0;
+}
+```
+
+### 用語の定義
+定義: 競合状態とは以下のような状態
+- 複数スレッドが
+    - (a) 同じ場所を
+    - (b) 並行してアクセスしていて
+- うち少なくとも１つは書き込みである
+
+定義: 際どい領域 Critical Section
+- コード上で競合状態が発生している領域
+
+### 競合状態の分類
+- 不可分性(Atomicity)の崩れ
+    - 一度にできない一連の操作の途中に他のUpdate処理が挟まるために、意図しない動作になる
+- 順序・依存関係(Dependency)の崩れ
+    - 複数スレッド間で、Read/Writeの順序保証をする必要がある処理なのに、その保証ができない場合にダメになる。
+
+## 同期 (Synchronization)
+### 排他制御 `mutex`
+1人しか入れない個室トイレ
+- `lock`: トイレが空いてれば入って鍵をかける。空いてなければ空くまで待つ
+- `unlock`: 鍵を空けてトイレを空ける。
+Atomicに行いたい処理をlock/unlockで挟む
+
+#### API
+API: [man page](https://linuxjm.osdn.jp/html/LDP_man-pages/man7/pthreads.7.html)
+```c
+#include <pthread.h>
+
+pthread_mutex_t m; /* 排他制御オブジェクト */
+pthread_mutex_init(&m, attr);
+pthread_mutex_destroy(&m);
+pthread_mutex_lock(&m); /* lock */
+pthread_mutex_try_lock(&m);
+pthread_mutex_unlock(&m); /* unlock */
+```
+
+![](./assets/concurrent_mutex_api.png)
+
+#### 例: スレッドセーフなIncrement Counter
+```c
+typedef struct {
+  long n;
+  pthread_mutex_t mutex;
+} counter_t;
+
+void counter_init(counter_t* c) {
+  c->n = 0;
+  pthread_mutex_init(&c->mutex, NULL);
+  return;
+}
+
+long counter_inc(counter_t* c) {
+  long ret;
+  pthread_mutex_lock(&c->mutex);
+  ret = c->n;
+  (c->n)++;
+  pthread_mutex_unlock(&c->mutex);
+  return ret;
+}
+
+long counter_get(counter_t* c) {
+  long ret;
+  pthread_mutex_lock(&c->mutex);
+  ret = c->n;
+  pthread_mutex_unlock(&c->mutex);
+  return ret;
+}
+```
+
+### バリア同期 `barrier`
+```c
+#include <pthread.h>
+pthread_barrier_t b; /* バリアオブジェクト */
+pthread_barrier_init(&b, attr, count);
+/* count=参加するスレッド数 */
+pthread_barrier_destroy(&b);
+pthread_barrier_wait(&b);
+/* 同期点に到達; 他のスレッドを待つ */
+```
+
+![](./assets/barrier_api.png)
+
+
+### 条件変数 `cond`
+ある条件が整うまで待つ、待っているスレッドを叩き起こす汎用機構。布団。
+
+```c
+#include <pthread.h>
+pthread_cond_t c;
+pthread_mutex_t m;
+
+pthread_cond_init(&c, attr);
+pthread_cond_destroy(&c);
+pthread_cond_wait(&c, &m); /* 寝る */
+pthread_cond_broadcast(&c); /* 全員起こす */
+pthread_cond_signal(&c); /* 誰か一人起こす */
+```
+
+#### `pthread_cond_wait(&c, &m)`の動作
+- `pthread_cond_wait`を呼び出した時点でスレッドはmをLockしている。
+    - mをunlockする
+    - cの上で寝る (中断・ブロック)
+を**不可分に**行う。
+    - returnする際にはまたmをLockしていることが保証
+![](./assets/condvar.png)
+
+#### 例: 飽和付きカウンタ (os07)
+```c
+/* 注: このプログラムはOMP_NUM_THREADSを使わずにコマンドラインで受け取った引数でスレッド数を決めている(#pragma omp parallel num_threads(...)) */
+
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <omp.h>
+
+/* 飽和カウンタ */
+typedef struct {
+  long x;
+  long capacity;
+  pthread_mutex_t m[1];
+  pthread_cond_t c[1];
+  pthread_cond_t d[1];
+} scounter_t;
+
+/* 初期化(値を0にする) */
+void scounter_init(scounter_t * s, long capacity) {
+  s->x = 0;
+  s->capacity = capacity;
+  if (pthread_mutex_init(s->m, 0)) {
+    die("pthread_mutex_init");
+  }
+  if (pthread_cond_init(s->c, 0)) {
+    die("pthread_cond_init");
+  }
+  if (pthread_cond_init(s->d, 0)) {
+    die("pthread_cond_init");
+  }
+}
+
+/* +1 ただしcapacityに達していたら待つ */
+long scounter_inc(scounter_t * s) {
+  pthread_mutex_lock(s->m);
+  long x = s->x;
+  // capacityに達していたらwait
+  while (x >= s->capacity) {
+    assert(x == s->capacity);
+    pthread_cond_wait(s->c, s->m);
+    x = s->x;
+  }
+  // 飽和が解消されたので
+  s->x = x + 1; // increment
+  // この操作によってEmptyが解消されたら、下限condに寝てるThreadを起こす
+  if (x <= 0) {
+    assert(x == 0);
+    pthread_cond_broadcast(s->d);
+  }
+  pthread_mutex_unlock(s->m);
+  assert(x < s->capacity);
+  return x;
+}
+
+/* -1 */
+long scounter_dec(scounter_t * s) {
+  pthread_mutex_lock(s->m);
+  long x = s->x;
+  // emptyだったらwait
+  while (x <= 0) {
+    assert(x == 0);
+    pthread_cond_wait(s->d, s->m);
+    x = s->x;
+  }
+  // emptyが解消されたので
+  s->x = x - 1; // decrement
+  // この操作によって飽和が解消されたら、上限condで寝てるThreadを起こす
+  if (x >= s->capacity) {
+    assert(x == s->capacity);
+    pthread_cond_broadcast(s->c);
+  }
+  pthread_mutex_unlock(s->m);
+  return x;
+}
+
+/* 現在の値を返す */
+long scounter_get(scounter_t * s) {
+  return s->x;
+}
+```
+
+#### 条件変数使い方テンプレ
+ある条件Cが成り立つまで待って、Aをする、という場合
+```c
+pthread_mutex_lock(&m);
+while (1) {
+    C = ...; /* 条件評価 */
+    if (C) break;
+    pthread_cond_wait(&c, &m);
+}
+/* C が成り立っているのでここで何かをする */
+A
+/* 寝ている誰かを起こせそうなら起こす */
+...
+pthread_mutex_unlock(&m);
+```
+
+#### pthread_cond_waitがmutexも引数にとる理由
+- 条件判定時、そのThreadはmutexをlockしているはず。
+- 自分が処理をブロックしてwaitする際は、他のThreadにMutexを開けわたさないといけない。
+- mのunlockと自分の休眠を不可分に行う必要がある(Lost wake up問題への対処)
+
+## 不可分更新命令
+1変数に対するRead/Writeを不可分に行ういくつかの命令がある
+- adhocな命令
+    - test&set p (0だったら1にする)
+    ```c
+    if (*p == 0) {
+        *p = 1; return 1;
+    } else {
+        return 0;
+    }
+    ```
+    - fetch&add p, x
+    ```c
+    *p = *p + x;
+    ```
+    - swap p, r
+    ```c
+    x = *p;
+    *p = r;
+    r = x;
+    ```
+- 汎用命令
+    - compare&swap: 自分が読んだ値が書きかわっていないことを確かめながら不可分に書き込む
+    ```c
+    x = *p;
+    if (x == r) {
+        *p = s;
+        s = x;
+    }
+    ```
+    - `bool __sync_bool_compare_and_swap(type *p, type r, type s)`
+        - swapが起きたかどうかを返す
+    - `type __sync_val_compare_and_swap(type *p, type r, type s)`
+        - `*p`に入っていた値を返す
+
+### CASテンプレ
+`*p = f(*p)`という更新を不可分に
+```c
+while (1) {
+    x = *p;
+    y = f(x);
+    if (__sync_bool_compare_and_swap(p, x, y)) break;
+}
+```
+
+## 同期の実装
+- ナイーブな発想
+```c
+// NG例
+int lock(mutex_t *m) {
+    while (1) {
+        if (m->locked == 0) { // 評価(競合)
+            m->locked = 1; // 更新(競合)
+            break;
+        } else {
+            BLOCK
+        }
+    }
+}
+```
+
+- 不可分更新命令を使う & `futex`を使う
+```c
+// OK
+int lock(mutex_t * m) {
+    while (!test_and_set(&m->locked)) {
+        /* m->locked == 1 だったらブロック */
+        futex(&m->locked, FUTEX WAIT, 1, 0, 0, 0);
+    }
+}
+int unlock(mutex_t * m) {
+    m->locked = 0;
+    futex(&m->locked, FUTEX_WAKE, 1, 0, 0, 0);
+}
+```
+
+### `futex`
+`if(u==v) then block`を不可分に実行
+```c
+futex(&u, FUTEX_WAIT, v, 0, 0, 0);
+```
+参照: [man futex](https://linuxjm.osdn.jp/html/LDP_man-pages/man2/futex.2.html)
+
+### 休眠待機　vs 繁忙待機
+- 休眠待機 (blocking wait)
+    - `futex`, `cond_wait`などで待つ
+    - OSに「CPUを割り当てなくて良い」とわかるように待つ
+- 繁忙待機
+    - `while(!condition) { 何もしない }`
+    - OSに「CPUを割り当てなくて良い」ことがわからないように待つ(実行可能であり続ける)
+例はスライド04 p60-65あたり参照
+
+![](./assets/busy_wait.png)
+
+- 基本は使わないが、全てのスレッドが同時に実行されている想定のときは高速化できるかも。多数のスレッドが中断・復帰するときには有効。
+
+### スピンロック
+mutexの繁忙待機バージョン
+`pthread_spinlock_*`
+
+### futex自体の実装(advanced)
+スライド参照。。
+
+### デッドロック
+同期のための待機状態が循環し、どのスレッド・プロセスも永遠にブロックしたままになる状態
+Example
+- 二つ以上の排他制御
+![](./assets/deadlock1.png)
+- 送受信バッファ
+![](./assets/deadlock2.png)
+
+回避方法
+- 問題の根源は「誰かを待たせながら誰かを待つ」こと。これがダメ。
+- mutexを一つだけにする (giant lock)
+- 1つのスレッドは2つのMutexを同時にLockしない。
+- 全てのmutexに順序をつけ、全てのスレッドはその全順序の順でしかLockをしない
+- 不可分更新をするのに排他制御を使わない
+    - 不可分更新
+    - トランザクショナルメモリ
+
+
+# 05 メモリ管理
+## 論理アドレス空間
 
 **プロセスごとに**論理アドレス（↔物理アドレス）空間を作る
 
 論理アドレスの範囲は物理メモリの量によらず、OSによって決まり、論理アドレスと物理アドレスの変換はCPUが行う。**対応する物理アドレスが存在するとは限らない**。
 
-# メモリ管理ユニット(MMU)
+## メモリ管理ユニット(MMU)
 CPU内のハードウェアでメモリアクセスに介在する。論理アドレスに対して、
 1. アドレス権の検査
 2. 対応する物理アドレスの有無の検査
 3. 存在していればアクセス
 を行う。
+
 MMUによって
 1. プロセス間でメモリの分離
-2. カーネルの保護
+2. カーネル(OS)の保護
 3. 物理メモリ量を超えたメモリ割り当て
-4. 要求時ページング
-   1. 物理メモリを確保せずに論理アドレスを割り当てる（高速）
-が行える
+4. *要求時ページング*
+   - 物理メモリを確保せずに論理アドレスを割り当てる（高速）
+
+が行える。
 
 ## アドレス交換のやり方
 論理アドレス → 物理アドレス/アクセス許可への写像を作る
@@ -542,7 +907,7 @@ $$ 2^{48}\times 8 \times Process = 2PB \times Process $$
 
 というふうに4段にする。最悪の場合、512GB必要なのは変わらないが、ほとんどのプロセスは論理アドレス空間のごく一部しか使わないので、下位の表は殆どの場合不要になり、多段ページテーブルの場合、効率が良い。（不要なページテーブルは作成しないので）
 
-## ページテーブルエントリ
+### ページテーブルエントリ
 ページテーブルのエントリは、以下のようになる。
 - P : 1ならページが存在する
   - W : 1なら書き込み可能
@@ -553,29 +918,29 @@ $$ 2^{48}\times 8 \times Process = 2PB \times Process $$
 
 ![](assets/2023-01-30-14-59-07.png)
 
-# TLB(Translation Lookaside Buffer)
+### TLB(Translation Lookaside Buffer)
 毎回論理アドレスの変換のために4回メモリアクセスはだるい
 →TLB（CPU内のキャッシュ）内に一部の写像を保存しておく（1024個程度 36bit x2 x 1024 = 9KiB程度？）
 
-# UNIXのメモリ割当API
+## UNIXのメモリ割当API
 - `brk(l)`
-  - データセグメントの終わりのアドレスをlにする。
+  - データセグメントの終わりのアドレスをlにする。`(x < l)`のアドレスxが利用可能になる(割り当てられる)
 - `sbrk(sz)`
   - プロセスのデータセグメントの境界をszだけ伸ばす
   - `sbrk(0)`で現在のデータセグメントの終わりのアドレスを返す
 
 - `mmap, mremap, munmap` 
-  - めっちゃ大事なやつら
+  - めっちゃ大事なやつら(後述)
 
 - `mprotect(a, sz, prot)`
   - メモリ領域aからszバイトのメモリ領域のアクセス権をprotに変更する
 
-メモリを割り当てることによって、**論理アドレスの範囲がアクセス可能になる**。実際にはアドレス空間表に割り当て済みであることを記述するだけで、アクセス発生時にメモリが割り当てられる。
+メモリを割り当てることによって、**論理アドレスの範囲がアクセス可能になる**。実際にはアドレス空間表に割り当て済みであることを記述するだけで、**アクセス発生時にメモリが割り当てられる**。
 
 ## ページアウト/ページイン
-物理メモリが足りなくなったときに、ページアウトを行う。ページアウトは、ページテーブルの物理ページを不在とし、次にアクセスする際にページフォルトが起こるようにしておく。ページアウトされたページは、ページインされるまで、物理メモリには存在しない。
+物理メモリが足りなくなったときに、ページアウトを行う。ページアウトは、ページテーブルの物理ページを不在とし、次にアクセスする際にページフォルトが起こるようにしておく。ページアウトされたページは、ページインされるまで、物理メモリには存在しない。スライド05の図を見る。
 
-# 資源使用量やメモリの割当状況をしるAPI
+## 資源使用量やメモリの割当状況を知るためのAPI
 - `getrusage`
   - プロセスの資源使用量を返す
 - `setrlimit`
@@ -586,12 +951,12 @@ $$ 2^{48}\times 8 \times Process = 2PB \times Process $$
   - メモリ領域のページの存在状況を返す
   - `mincore(addr, len, vec)`で、addrからlenバイトのメモリ領域のページの存在状況をvecに書き込む
 
-# cgrouops
+## cgrouops
 - `cgroup`は、Linuxカーネルの機能で、プロセスのグループを作成し、グループ内のプロセスに対して、資源使用量の上限を設定することができる。
 
 `/sys/fs/cgroup/hoge/`に、`cpu.cfs_quota_us`と`cpu.cfs_period_us`を書き込むことで、CPU使用量の上限を設定できる。`cpu.cfs_quota_us`には、CPU使用量の上限をマイクロ秒単位で書き込む。`cpu.cfs_period_us`には、CPU使用量の上限を計算する周期をマイクロ秒単位で書き込む。`cpu.cfs_quota_us`には、`cpu.cfs_period_us`の周期で、`cpu.cfs_quota_us`マイクロ秒までCPUを使用できる。`cpu.cfs_quota_us`には、`cpu.cfs_period_us`の周期で、`cpu.cfs_quota_us`マイクロ秒までCPUを使用できる。`memory.high`でメモリの使用量の上限を設定できる。
 
-# ページ置換アルゴリズム
+## ページ置換アルゴリズム
 物理メモリが足りなくなったときに、どのページをページアウトするかを決めるアルゴリズム。
 ページ置換が頻繁に起こる状態をスラッシングという。
 
